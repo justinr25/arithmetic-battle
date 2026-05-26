@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import NameInput from '../components/NameInput'
 
 export default function HomePage() {
   const [name, setName] = useState<string>('')
   const navigate = useNavigate()
 
+//   TODO: Create room in database, get actual room ID from DB
   const handleCreateRoom = async () => {
     console.log("Creating room in database...")
     const roomId = "ABC123"
