@@ -14,6 +14,7 @@ export default function NameInput({ value, onChange }: NameInputProps) {
         type="text"
         className="form-control form-control-lg text-center shadow-sm"
         placeholder="Enter your name..."
+        autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
