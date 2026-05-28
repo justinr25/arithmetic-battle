@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router"
 import { generateProblem } from "../lib/problems"
 import type { Problem } from "../lib/gameTypes"
@@ -11,6 +11,7 @@ export default function GamePage() {
     const [score, setScore] = useState<number>(0)
     const [inputValue, setInputValue] = useState<string>('')
     const [timeLeft, setTimeLeft] = useState<number>(15)
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
         
     
     // Hard coded for now, will need to retrive from Firestore
@@ -21,16 +22,22 @@ export default function GamePage() {
     
     // Core Timer Loop (Runs once on mount, purely decrements time)
     useEffect(() => {
-        const timer = setInterval(() => {
+        timerRef.current = setInterval(() => {
             setTimeLeft((prev) => Math.max(0, prev - 1))
         }, 1000)
 
-        return () => clearInterval(timer)
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current)
+        }
     }, [])
 
     // Game Over Trigger (Listens for timeLeft to hit 0 and handles navigation with the LATEST score)
     useEffect(() => {
         if (timeLeft === 0) {
+            if (timerRef.current) {
+                clearInterval(timerRef.current)
+                timerRef.current = null
+            }
             // TODO: don't pass in score, use Firestore
             navigate(`/results/${roomId}`, { state: { finalScore: score } })
         }
