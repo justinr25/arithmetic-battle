@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import NameInput from '../components/NameInput'
+import { signInAnonymously } from 'firebase/auth'
+import { auth, createRoom } from '../lib/firebase'
 
 export default function HomePage() {
   const [name, setName] = useState<string>('')
   const navigate = useNavigate()
 
-//   TODO: Create room in database, get actual room ID from DB
   const handleCreateRoom = async () => {
     console.log("Creating room in database...")
-    const roomId = "ABC123"
+
+    const cred = await signInAnonymously(auth)
+    const uid = cred.user.uid
+    sessionStorage.setItem("playerId", uid)
+    sessionStorage.setItem("playerName", name)
+    const roomId = await createRoom(uid, name)
 
     navigate(`/room/${roomId}`)
   }
