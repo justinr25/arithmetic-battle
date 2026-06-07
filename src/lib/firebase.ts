@@ -55,7 +55,6 @@ export async function joinRoom(roomId: string, guestId: string, guestName: strin
   await updateDoc(roomRef, {
     guestId,
     guestName,
-    status: "countdown",
     startTime: Date.now(),
     [`scores.${guestId}`]: 0 
   })

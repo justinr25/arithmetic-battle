@@ -42,6 +42,7 @@ export default function GamePage() {
             navigate(`/results/${roomId}`, { state: { finalScore: score } })
         }
     }, [timeLeft, score, roomId, navigate])
+
     const handleInputValueChange = (value: string) => {
         // Restrict input strictly to digits 0-9 (allow clearing with empty string)
         if (value !== "" && !/^[0-9]*$/.test(value)) return;
