@@ -32,6 +32,20 @@ export default function RoomPage() {
         }
     }, [room?.status, cleanRoomId, navigate])
 
+    // Guard Clause: show a loading indicator until database data arrives
+    if (!room) {
+        return (
+            <div className="container d-flex justify-content-center align-items-center min-vh-100">
+                <div className="text-center">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading room...</span>
+                    </div>
+                    <p className="mt-2 text-muted">Connecting to lobby...</p>
+                </div>
+            </div>
+        )
+    }
+
     const handleCopyRoomId = () => {
         try {
             navigator.clipboard.writeText(cleanRoomId)
@@ -50,33 +64,40 @@ export default function RoomPage() {
         navigate(`/game/${cleanRoomId}`)
     }
 
-    // Guard Clause: show a loading indicator until database data arrives
-    if (!room) {
-        return (
-            <div className="container d-flex justify-content-center align-items-center min-vh-100">
-                <div className="text-center">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading room...</span>
-                    </div>
-                    <p className="mt-2 text-muted">Connecting to lobby...</p>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div className="container d-flex justify-content-center align-items-center min-vh-100">
             <div className="card shadow p-4 text-center border-0 bg-light-subtle">
                 <h1>Room {cleanRoomId}</h1>
 
                 <ul className="list-group">
-                    <li className="list-group-item">{room.hostName} (Host)</li>
-                    <li className="list-group-item">{room.guestName || "Waiting for opponent..."}</li>
+                    <li className="list-group-item"><strong>{room.hostName}</strong> <span className="text-muted">(Host)</span></li>
+                    <li className="list-group-item"><strong>{room.guestName || <span className="fw-light text-muted">Waiting for opponent...</span>}</strong></li>
                 </ul>
 
-                <button className="btn btn-primary mt-2" onClick={handleCopyRoomId}>
-                    {copied ? "Copied!" : "Copy Room ID"}
-                </button>
+                {/* TODO: game settings (time) */}
+                {/* {amHost && (
+                    <div className="mt-3">
+                        <label htmlFor="timeLimit" className="form-label">
+                            Time Limit: {timeLimit} seconds
+                        </label>
+                        <input
+                            type="range"
+                            className="form-range"
+                            id="timeLimit"
+                            min="15"
+                            max="180"
+                            step="15"
+                            value={timeLimit}
+                            onChange={(e) => setTimeLimit(Number(e.target.value))}
+                        />
+                    </div>
+                )} */}
+
+                {amHost && !room.guestId && (
+                    <button className="btn btn-primary mt-2" onClick={handleCopyRoomId}>
+                        {copied ? "Copied!" : "Copy Room ID"}
+                    </button>
+                )}
 
                 {amHost && room.guestId && (
                     <button
@@ -86,6 +107,13 @@ export default function RoomPage() {
                         <i className="bi bi-play-fill me-2"></i>
                         Start Game
                     </button>
+                )}
+
+                {!amHost && (
+                    // waiting for host to start the game
+                    <p className="text-muted mt-3 mb-0 small">
+                        Waiting for the host to start the game...
+                    </p>
                 )}
             </div>
         </div>

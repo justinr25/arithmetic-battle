@@ -83,7 +83,14 @@ export function subscribeToRoom(roomId: string, callback: (room: Room) => void):
 // flip status to "playing" — both players' listeners will react immediately
 export async function startGame(roomId: string): Promise<void> {
     const roomRef = doc(db, "rooms", roomId)
-    await updateDoc(roomRef, { status: "playing" })
+
+    // generate new seed
+    const seed = Math.floor(Math.random() * 1000000)
+
+    await updateDoc(roomRef, { 
+        status: "playing",
+        seed 
+    })
 }
 
 // flip status to "finished" — triggers navigation to results on all clients
