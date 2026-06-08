@@ -12,7 +12,7 @@ export default function GamePage() {
     const [problemIndex, setProblemIndex] = useState<number>(0)
     const [score, setScore] = useState<number>(0)
     const [inputValue, setInputValue] = useState<string>('')
-    const [timeLeft, setTimeLeft] = useState<number>(10) // hardcoded for now
+    const [timeLeft, setTimeLeft] = useState<number>(15) // hardcoded for now
     const [room, setRoom] = useState<Room | null>(null)
 
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -66,9 +66,9 @@ export default function GamePage() {
             <div className="container d-flex justify-content-center align-items-center min-vh-100">
                 <div className="text-center">
                     <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading results...</span>
+                        <span className="visually-hidden">Loading game...</span>
                     </div>
-                    <p className="mt-2 text-muted">Loading results...</p>
+                    <p className="mt-2 text-muted">Loading game...</p>
                 </div>
             </div>
         )
