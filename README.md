@@ -2,6 +2,8 @@
 
 Arithmetic Battle is a real-time, multiplayer mental math duel. Players go head-to-head to solve arithmetic problems as fast as they can before the timer runs out.
 
+🔗 **[Live Demo](https://arithmetic-battle.vercel.app/)**
+
 ## 🚀 Key Features
 
 - **Instant Multiplayer Rooms:** Host matches and invite friends using unique 6-character room codes.
