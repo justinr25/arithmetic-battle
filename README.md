@@ -1,73 +1,54 @@
-# React + TypeScript + Vite
+# ⚔️ Arithmetic Battle
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Arithmetic Battle is a real-time, multiplayer mental math duel. Players go head-to-head to solve arithmetic problems as fast as they can before the timer runs out.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Instant Multiplayer Rooms:** Host matches and invite friends using unique 6-character room codes.
+- **Fair Problem Sync:** Utilizes a custom seeded pseudo-random number generator (Mulberry32) so both players receive the **exact same math problems** in the **exact same order**.
+- **Real-time Scoring:** Live opponent scores are synced on-screen using Firebase Firestore listener subscriptions (`onSnapshot`).
+- **Multiplayer Rematches:** Instantly launch a rematch that resets scores and generates a new math problem sequence.
+- **Anonymous Authentication:** Zero-friction entry using Firebase Anonymous Authentication.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React 19, TypeScript, Vite, React Router, Bootstrap 5 (with Bootstrap Icons)
+- **Backend:** Firebase (Firestore Database, Anonymous Auth)
+- **Hosting:** Vercel
 
-## Expanding the ESLint configuration
+## 💻 Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Clone the repository
+```bash
+git clone https://github.com/justinr25/arithmetic-battle.git
+cd arithmetic-battle
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Install dependencies
+```bash
+npm install
 ```
+
+### 3. Setup environment variables
+Create a `.env` file in the root directory and add your Firebase credentials:
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+### 4. Run the development server
+```bash
+npm run dev
+```
+
+---
+
+## 📜 Available Scripts
+
+- `npm run dev`: Starts the local Vite development server.
+- `npm run build`: Compiles TypeScript and builds the optimized production static bundle in the `/dist` folder.
+- `npm run preview`: Previews the built production site locally.
