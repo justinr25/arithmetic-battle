@@ -1,24 +1,24 @@
-# ⚔️ Arithmetic Battle
+# Arithmetic Battle
 
 Arithmetic Battle is a real-time, multiplayer mental math duel. Players go head-to-head to solve arithmetic problems as fast as they can before the timer runs out.
 
-🔗 **[Live Demo](https://arithmetic-battle.vercel.app/)**
+**[Live Demo](https://arithmetic-battle.vercel.app/)**
 
-## 🚀 Key Features
+## Key Features
 
 - **Instant Multiplayer Rooms:** Host matches and invite friends using unique 6-character room codes.
 - **Fair Problem Sync:** Utilizes a custom seeded pseudo-random number generator (Mulberry32) so both players receive the **exact same math problems** in the **exact same order**.
-- **Real-time Scoring:** Live opponent scores are synced on-screen using Firebase Firestore listener subscriptions (`onSnapshot`).
+- **Real-time Scoring:** Live opponent scores are synced on-screen using Firebase Firestore listener subscriptions.
 - **Multiplayer Rematches:** Instantly launch a rematch that resets scores and generates a new math problem sequence.
 - **Anonymous Authentication:** Zero-friction entry using Firebase Anonymous Authentication.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** React 19, TypeScript, Vite, React Router, Bootstrap 5 (with Bootstrap Icons)
 - **Backend:** Firebase (Firestore Database, Anonymous Auth)
 - **Hosting:** Vercel
 
-## 💻 Getting Started
+## Getting Started
 
 ### 1. Clone the repository
 ```bash
@@ -49,7 +49,7 @@ npm run dev
 
 ---
 
-## 📜 Available Scripts
+## Available Scripts
 
 - `npm run dev`: Starts the local Vite development server.
 - `npm run build`: Compiles TypeScript and builds the optimized production static bundle in the `/dist` folder.
