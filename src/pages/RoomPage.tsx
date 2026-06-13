@@ -93,6 +93,13 @@ export default function RoomPage() {
                     </div>
                 )}
 
+                {/* show the selected time limit to the guest */}
+                {!amHost && (
+                    <div className="mt-3 alert alert-secondary py-2 border-0">
+                        Selected Time Limit: <strong>{room.timeLimit} seconds</strong>
+                    </div>
+                )}
+
                 {amHost && !room.guestId && (
                     <button className="btn btn-primary mt-2" onClick={handleCopyRoomId}>
                         {copied ? "Copied!" : "Copy Room ID"}
