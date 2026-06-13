@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router"
 import { generateProblem } from "../lib/problems"
 import type { Problem, Room } from "../lib/gameTypes"
@@ -16,7 +16,6 @@ export default function GamePage() {
     const [room, setRoom] = useState<Room | null>(null)
     const [countdown, setCountdown] = useState<number | null>(3) // starts at 3 seconds, goes to null
 
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const myId = sessionStorage.getItem("playerId") || ""
 
     // subscribe to room changes
@@ -30,20 +29,27 @@ export default function GamePage() {
         return unsubscribe
     }, [cleanRoomId])
 
-    // 3-second start countdown
+    // 5-second countdown before game starts
     useEffect(() => {
-        if (room && timeLeft !== null && countdown !== null) {
-            const timer = setTimeout(() => {
-                if (countdown === 1) {
-                    setCountdown(null) // starts the game
-                } else {
-                    setCountdown(countdown - 1)
-                }
-            }, 1000)
+        const startTime = room?.startTime
+        if (!startTime) return
 
-            return () => clearTimeout(timer)
-        }
-    }, [room, timeLeft, countdown])
+        const interval = setInterval(() => {
+            const timeUntilStart = startTime - Date.now()
+
+            if (timeUntilStart <= 0) { // start the game
+                setCountdown(null)
+                clearInterval(interval)
+                return
+            } else { // count down until game starts
+                // convert milliseconds to seconds (rounded up)
+                setCountdown(Math.ceil(timeUntilStart / 1000))
+            }
+
+        }, 100) // update every 100ms for high accuracy
+
+        return () => clearInterval(interval)
+    }, [room?.startTime])
 
     // sync timeLeft with Firestore timeLimit when room loads
     useEffect(() => {
@@ -55,28 +61,30 @@ export default function GamePage() {
 
     // Core Timer Loop
     useEffect(() => {
-        timerRef.current = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev === null) return null // don't count down until initialized
-                if (countdown !== null) return prev // freeze timer during countdown
+        // only start counting down if room has startTime and countdown has finished
+        if (!room?.startTime || countdown !== null) return
 
-                return Math.max(0, prev - 1)
-            })
-        }, 1000)
+        const gameEndTime = room.startTime + (room.timeLimit * 1000)
 
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current)
-        }
-    }, [countdown])
+        const interval = setInterval(() => {
+            const now = Date.now()
+            const timeRemaining = gameEndTime - now
+
+            if (timeRemaining <= 0) { // end game
+                setTimeLeft(0)
+                clearInterval(interval)
+            } else { // still playing
+                // convert milliseconds to remaining whole seconds (e.g. 100ms left -> 1s)
+                setTimeLeft(Math.ceil(timeRemaining / 1000))
+            }
+        }, 100) // update every 100ms for accuracy
+
+        return () => clearInterval(interval)
+    }, [room?.startTime, room?.timeLimit, countdown])
 
     // Game Over Trigger (Listens for timeLeft to hit 0 and handles navigation with the LATEST score)
     useEffect(() => {
         if (timeLeft === 0) {
-            if (timerRef.current) {
-                clearInterval(timerRef.current)
-                timerRef.current = null
-            }
-        
             // mark game as finished in Firestore
             finishGame(cleanRoomId)
         }

@@ -56,7 +56,6 @@ export async function joinRoom(roomId: string, guestId: string, guestName: strin
   await updateDoc(roomRef, {
     guestId,
     guestName,
-    startTime: Date.now(),
     [`scores.${guestId}`]: 0 
   })
 }
@@ -98,7 +97,8 @@ export async function startGame(roomId: string): Promise<void> {
     await updateDoc(roomRef, {
         status: "playing",
         seed,
-        scores: {}
+        scores: {},
+        startTime: Date.now() + 5000 // shared start time (5 sec into future)
     })
 }
 
