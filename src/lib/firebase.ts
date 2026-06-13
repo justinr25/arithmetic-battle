@@ -41,7 +41,8 @@ export async function createRoom(hostId: string, hostName: string): Promise<stri
     status: 'waiting',
     seed,
     startTime: null,
-    scores: { [hostId]: 0 }
+    scores: { [hostId]: 0 },
+    timeLimit: 120
   }
 
   await setDoc(roomRef, newRoom)
@@ -67,6 +68,15 @@ export async function updateScore(roomId: string, playerId: string, score: numbe
   await updateDoc(roomRef, {
     [`scores.${playerId}`]: score
   })
+}
+
+// 
+export async function updateTimeLimit(roomId: string, timeLimit: number): Promise<void> {
+    const roomRef = doc(db, "rooms", roomId)
+
+    await updateDoc(roomRef, {
+        timeLimit
+    })
 }
 
 // listen to real-time updates to the room document

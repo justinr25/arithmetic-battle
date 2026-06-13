@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router"
 import type { Room } from "../lib/gameTypes";
-import { startGame, subscribeToRoom } from "../lib/firebase";
+import { startGame, subscribeToRoom, updateTimeLimit } from "../lib/firebase";
 
 export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -74,11 +74,11 @@ export default function RoomPage() {
                     <li className="list-group-item"><strong>{room.guestName || <span className="fw-light text-muted">Waiting for opponent...</span>}</strong></li>
                 </ul>
 
-                {/* TODO: game settings (time) */}
-                {/* {amHost && (
+                {/* adjust game settings (time) */}
+                {amHost && (
                     <div className="mt-3">
                         <label htmlFor="timeLimit" className="form-label">
-                            Time Limit: {timeLimit} seconds
+                            Time Limit: {room.timeLimit} seconds
                         </label>
                         <input
                             type="range"
@@ -87,11 +87,11 @@ export default function RoomPage() {
                             min="15"
                             max="180"
                             step="15"
-                            value={timeLimit}
-                            onChange={(e) => setTimeLimit(Number(e.target.value))}
+                            value={room.timeLimit}
+                            onChange={(e) => updateTimeLimit(cleanRoomId, Number(e.target.value))}
                         />
                     </div>
-                )} */}
+                )}
 
                 {amHost && !room.guestId && (
                     <button className="btn btn-primary mt-2" onClick={handleCopyRoomId}>

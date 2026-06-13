@@ -12,7 +12,7 @@ export default function GamePage() {
     const [problemIndex, setProblemIndex] = useState<number>(0)
     const [score, setScore] = useState<number>(0)
     const [inputValue, setInputValue] = useState<string>('')
-    const [timeLeft, setTimeLeft] = useState<number>(15) // hardcoded for now
+    const [timeLeft, setTimeLeft] = useState<number | null>(null) // hardcoded for now
     const [room, setRoom] = useState<Room | null>(null)
 
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -28,11 +28,21 @@ export default function GamePage() {
 
         return unsubscribe
     }, [cleanRoomId])
+
+    // sync timeLeft with Firestore timeLimit when room loads
+    useEffect(() => {
+        if (room && timeLeft === null) {
+            setTimeLeft(room.timeLimit)
+        }
+    }, [room, timeLeft])
     
     // Core Timer Loop (Runs once on mount, purely decrements time)
     useEffect(() => {
         timerRef.current = setInterval(() => {
-            setTimeLeft((prev) => Math.max(0, prev - 1))
+            setTimeLeft((prev) => {
+                if (prev === null) return null // Don't count down until initialized
+                return Math.max(0, prev - 1)
+            })
         }, 1000)
 
         return () => {
@@ -51,7 +61,7 @@ export default function GamePage() {
             // mark game as finished in Firestore
             finishGame(cleanRoomId)
         }
-    }, [timeLeft, score, cleanRoomId])
+    }, [timeLeft, cleanRoomId])
 
     // Game Finished Redirect (Listens for status to flip to "finished" and handles navigation)
     useEffect(() => {
@@ -60,8 +70,8 @@ export default function GamePage() {
         }
     }, [room?.status, cleanRoomId, navigate])
 
-    // Guard Clause: show a loading indicator until database data arrives
-    if (!room) {
+    // Guard Clause: show a loading indicator until database data AND timer are ready
+    if (!room || timeLeft === null) {
         return (
             <div className="container d-flex justify-content-center align-items-center min-vh-100">
                 <div className="text-center">

@@ -19,4 +19,5 @@ export interface Room {
     seed: number
     startTime: number | null
     scores: Record<string, number> // { "uid123": 5, uid456": 3 }
+    timeLimit: number // seconds
 }
