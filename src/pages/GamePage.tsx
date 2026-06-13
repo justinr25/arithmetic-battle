@@ -12,8 +12,9 @@ export default function GamePage() {
     const [problemIndex, setProblemIndex] = useState<number>(0)
     const [score, setScore] = useState<number>(0)
     const [inputValue, setInputValue] = useState<string>('')
-    const [timeLeft, setTimeLeft] = useState<number | null>(null) // hardcoded for now
+    const [timeLeft, setTimeLeft] = useState<number | null>(null)
     const [room, setRoom] = useState<Room | null>(null)
+    const [countdown, setCountdown] = useState<number | null>(3) // starts at 3 seconds, goes to null
 
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const myId = sessionStorage.getItem("playerId") || ""
@@ -29,18 +30,36 @@ export default function GamePage() {
         return unsubscribe
     }, [cleanRoomId])
 
+    // 3-second start countdown
+    useEffect(() => {
+        if (room && timeLeft !== null && countdown !== null) {
+            const timer = setTimeout(() => {
+                if (countdown === 1) {
+                    setCountdown(null) // starts the game
+                } else {
+                    setCountdown(countdown - 1)
+                }
+            }, 1000)
+
+            return () => clearTimeout(timer)
+        }
+    }, [room, timeLeft, countdown])
+
     // sync timeLeft with Firestore timeLimit when room loads
     useEffect(() => {
         if (room && timeLeft === null) {
             setTimeLeft(room.timeLimit)
         }
     }, [room, timeLeft])
-    
-    // Core Timer Loop (Runs once on mount, purely decrements time)
+
+
+    // Core Timer Loop
     useEffect(() => {
         timerRef.current = setInterval(() => {
             setTimeLeft((prev) => {
-                if (prev === null) return null // Don't count down until initialized
+                if (prev === null) return null // don't count down until initialized
+                if (countdown !== null) return prev // freeze timer during countdown
+
                 return Math.max(0, prev - 1)
             })
         }, 1000)
@@ -48,7 +67,7 @@ export default function GamePage() {
         return () => {
             if (timerRef.current) clearInterval(timerRef.current)
         }
-    }, [])
+    }, [countdown])
 
     // Game Over Trigger (Listens for timeLeft to hit 0 and handles navigation with the LATEST score)
     useEffect(() => {
@@ -83,6 +102,21 @@ export default function GamePage() {
             </div>
         )
     }
+
+    // render countdown until game starts
+    if (countdown !== null) {
+        return (
+            <div className="container d-flex justify-content-center align-items-center min-vh-100">
+                <div className="text-center">
+                    <h1 className="display-1 fw-bold text-primary animate-pulse">
+                        {countdown}
+                    </h1>
+                    <p className="fs-4 text-muted">Get Ready...</p>
+                </div>
+            </div>
+        )
+    }
+
 
     // retrieve seed from Firestore
     const seed = room.seed
@@ -119,6 +153,7 @@ export default function GamePage() {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     autoComplete="off"
+                    autoFocus
                     className="form-control form-control-lg text-center shadow-sm"
                     value={inputValue}
                     onChange={(e) => handleInputValueChange(e.target.value)}
