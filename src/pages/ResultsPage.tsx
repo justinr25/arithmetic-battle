@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router"
-import { startGame, subscribeToRoom } from "../lib/firebase";
+import { startGame, subscribeToRoom, updateRematchRequest } from "../lib/firebase";
 import type { Room } from "../lib/gameTypes";
 
 export default function ResultsPage() {
     const { roomId } = useParams<{ roomId: string }>();
     const cleanRoomId = roomId || ""
     const navigate = useNavigate()
+    const myId = sessionStorage.getItem("playerId") || ""
 
     const [room, setRoom] = useState<Room | null>(null)
     
@@ -27,6 +28,25 @@ export default function ResultsPage() {
             navigate(`/game/${cleanRoomId}`)
         }
     }, [room?.status, cleanRoomId, navigate])
+    // Auto-start rematch when both players have voted
+    useEffect(() => {
+        if (!room) return
+
+        const hostId = room.hostId
+        const guestId = room.guestId
+
+        if (hostId && guestId) {
+            const hostAgreed = room.rematchRequests?.[hostId] === true
+            const guestAgreed = room.rematchRequests?.[guestId] === true
+
+            if (hostAgreed && guestAgreed && room.status === "finished") {
+                // Only the host writes the status update to Firestore to prevent races
+                if (myId === hostId) {
+                    startGame(cleanRoomId)
+                }
+            }
+        }
+    }, [room, myId, cleanRoomId])
 
     // Guard Clause: show a loading indicator until database data arrives
     if (!room) {
@@ -42,20 +62,18 @@ export default function ResultsPage() {
         )
     }
 
-    const handleRematch = () => {
-        console.log("Starting game...")
-
-        startGame(cleanRoomId)
-
-        navigate(`/game/${cleanRoomId}`)
-    }
-
     // get results from Firestore
-    const myId = sessionStorage.getItem("playerId") || ""
     const myScore = room.scores[myId] ?? 0
     const oppId = room.hostId === myId ? room.guestId : room.hostId
     const oppScore = oppId ? (room.scores[oppId] ?? 0) : 0
-    
+
+    const rematchRequests = room.rematchRequests || {}
+    const isMyRematchRequested = rematchRequests[myId] || false
+
+    const handleRematch = () => {
+        updateRematchRequest(cleanRoomId, myId, !isMyRematchRequested)
+    }
+
     const resultMessage = myScore > oppScore ? "You win!" : myScore < oppScore ? "You lose!" : "It's a tie!"
 
     return (
@@ -84,14 +102,30 @@ export default function ResultsPage() {
                     Back to Home
                 </button>
 
+                {/* rematch status indicators */}
+                <div className="mt-3 p-2 bg-body-secondary rounded-2">
+                    <p className="small mb-1 fw-semibold text-muted">Rematch Status</p>
+                    <div className="d-flex justify-content-around small">
+                        <span>
+                            {room.hostName}: {room.rematchRequests?.[room.hostId] ? "✅ Ready" : "⏳ Thinking"}
+                        </span>
+                        {room.guestId && (
+                            <span>
+                                {room.guestName}: {room.rematchRequests?.[room.guestId] ? "✅ Ready" : "⏳ Thinking"}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
                 {/* rematch button */}
-                {/* TODO: implement requiring both players to click rematch */}
                 <button
-                    className="btn btn-secondary btn-lg shadow-sm w-100 fw-semibold mt-2"
+                    className={`btn btn-lg shadow-sm w-100 fw-semibold mt-2 ${
+                        isMyRematchRequested ? "btn-success" : "btn-secondary"
+                    }`}
                     onClick={handleRematch}
                 >
                     <i className="bi bi-arrow-clockwise me-2"></i>
-                    Rematch
+                    {isMyRematchRequested ? "Waiting for opponent..." : "Rematch"}
                 </button>
             </div>
         </div>

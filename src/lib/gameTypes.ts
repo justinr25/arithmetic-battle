@@ -20,4 +20,5 @@ export interface Room {
     startTime: number | null
     scores: Record<string, number> // { "uid123": 5, uid456": 3 }
     timeLimit: number // seconds
+    rematchRequests: Record<string, boolean> // { "uid123": true, "uid456": true }
 }

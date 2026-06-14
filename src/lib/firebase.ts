@@ -42,7 +42,8 @@ export async function createRoom(hostId: string, hostName: string): Promise<stri
     seed,
     startTime: null,
     scores: { [hostId]: 0 },
-    timeLimit: 120
+    timeLimit: 120,
+    rematchRequests: {}
   }
 
   await setDoc(roomRef, newRoom)
@@ -78,6 +79,14 @@ export async function updateTimeLimit(roomId: string, timeLimit: number): Promis
     })
 }
 
+export async function updateRematchRequest(roomId: string, playerId: string, requested: boolean): Promise<void> {
+    const roomRef = doc(db, "rooms", roomId)
+
+    await updateDoc(roomRef, {
+        [`rematchRequests.${playerId}`]: requested
+    })
+}
+
 // listen to real-time updates to the room document
 export function subscribeToRoom(roomId: string, callback: (room: Room) => void): () => void {
   const roomRef = doc(db, "rooms", roomId)
@@ -98,7 +107,8 @@ export async function startGame(roomId: string): Promise<void> {
         status: "playing",
         seed,
         scores: {},
-        startTime: Date.now() + 5000 // shared start time (5 sec into future)
+        startTime: Date.now() + 5000, // shared start time (5 sec into future)
+        rematchRequests: {}
     })
 }
 
