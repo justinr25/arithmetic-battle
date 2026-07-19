@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage'
 import RoomPage from './pages/RoomPage'
 import GamePage from './pages/GamePage'
 import ResultsPage from './pages/ResultsPage'
+import { Toaster } from 'react-hot-toast'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="/game/:roomId" element={<GamePage />} />
         <Route path="/results/:roomId" element={<ResultsPage />} />
       </Routes>
+      <Toaster position="bottom-right" />
     </BrowserRouter>
   )
 }

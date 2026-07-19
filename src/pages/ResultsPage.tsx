@@ -28,6 +28,7 @@ export default function ResultsPage() {
             navigate(`/game/${cleanRoomId}`)
         }
     }, [room?.status, cleanRoomId, navigate])
+
     // Auto-start rematch when both players have voted
     useEffect(() => {
         if (!room) return
