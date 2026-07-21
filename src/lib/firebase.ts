@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore, doc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore'
+import { getFirestore, doc, setDoc, updateDoc, onSnapshot, getDoc } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import type { Room } from './gameTypes'
 
@@ -53,6 +53,16 @@ export async function createRoom(hostId: string, hostName: string): Promise<stri
 // add guest to an existing room
 export async function joinRoom(roomId: string, guestId: string, guestName: string): Promise<void> {
   const roomRef = doc(db, "rooms", roomId)
+  const roomSnap = await getDoc(roomRef)
+
+  if (!roomSnap.exists()) {
+    throw new Error("Room not found")
+  }
+
+  const room = roomSnap.data() as Room
+  if (room.guestId && room.guestId !== guestId) {
+    throw new Error("Room is already full")
+  }
 
   await updateDoc(roomRef, {
     guestId,

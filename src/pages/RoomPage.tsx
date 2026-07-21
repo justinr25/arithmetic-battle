@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { startGame, updateTimeLimit } from "../lib/firebase";
 import { useRoom } from "../hooks/useRoom";
+import toast from "react-hot-toast";
 
 export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -21,23 +22,16 @@ export default function RoomPage() {
         }
     }, [room?.status, cleanRoomId, navigate]);
 
-    // Handle Error State
-    if (error) {
-        return (
-            <div className="container d-flex justify-content-center align-items-center min-vh-100">
-                <div className="text-center">
-                    <h3 className="text-danger mb-3">Oops!</h3>
-                    <p className="text-muted">{error}</p>
-                    <button className="btn btn-primary mt-2" onClick={() => navigate("/")}>
-                        Go Home
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // Handle Error State: Automatically redirect to home
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+            navigate("/");
+        }
+    }, [error, navigate]);
 
-    // Guard Clause: show a loading indicator until database data arrives
-    if (loading || !room) {
+    // Guard Clause: show a loading indicator until database data arrives (or if we are redirecting due to error)
+    if (loading || !room || error) {
         return (
             <div className="container d-flex justify-content-center align-items-center min-vh-100">
                 <div className="text-center">
@@ -146,6 +140,14 @@ export default function RoomPage() {
                         Waiting for the host to start the game...
                     </p>
                 )}
+
+                <button 
+                    className="btn btn-outline-danger mt-4 w-100 fw-semibold"
+                    onClick={() => navigate("/")}
+                >
+                    <i className="bi bi-box-arrow-left me-2"></i>
+                    Leave Room
+                </button>
             </div>
         </div>
     );

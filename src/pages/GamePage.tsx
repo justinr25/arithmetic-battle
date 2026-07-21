@@ -6,6 +6,7 @@ import type { Problem } from "../lib/gameTypes";
 import { finishGame, updateScore } from "../lib/firebase";
 import { useRoom } from "../hooks/useRoom";
 import { useGameTimer } from "../hooks/useGameTimer";
+import toast from "react-hot-toast";
 
 export default function GamePage() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -36,23 +37,16 @@ export default function GamePage() {
         }
     }, [room?.status, cleanRoomId, navigate]);
 
-    // Handle Error State
-    if (error) {
-        return (
-            <div className="container d-flex justify-content-center align-items-center min-vh-100">
-                <div className="text-center">
-                    <h3 className="text-danger mb-3">Oops!</h3>
-                    <p className="text-muted">{error}</p>
-                    <button className="btn btn-primary mt-2" onClick={() => navigate("/")}>
-                        Go Home
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // Handle Error State: Automatically redirect to home
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+            navigate("/");
+        }
+    }, [error, navigate]);
 
-    // Guard Clause: show a loading indicator until database data AND timer are ready
-    if (loading || !room || timeLeft === null) {
+    // Guard Clause: show a loading indicator until database data AND timer are ready (or if we are redirecting due to error)
+    if (loading || !room || timeLeft === null || error) {
         return (
             <div className="container d-flex justify-content-center align-items-center min-vh-100">
                 <div className="text-center">

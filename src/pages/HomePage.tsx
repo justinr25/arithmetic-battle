@@ -14,15 +14,25 @@ export default function HomePage() {
     const navigate = useNavigate();
 
     const handleCreateRoom = async () => {
-        console.log("Creating room in database...");
+        if (!name.trim()) {
+            toast.error("Please enter a valid name.");
+            return;
+        }
 
-        const cred = await signInAnonymously(auth);
-        const uid = cred.user.uid;
-        sessionStorage.setItem("playerId", uid);
-        sessionStorage.setItem("playerName", name);
-        const roomId = await createRoom(uid, name);
+        try {
+            console.log("Creating room in database...");
 
-        navigate(`/room/${roomId}`);
+            const cred = await signInAnonymously(auth);
+            const uid = cred.user.uid;
+            sessionStorage.setItem("playerId", uid);
+            sessionStorage.setItem("playerName", name.trim());
+            const roomId = await createRoom(uid, name.trim());
+
+            navigate(`/room/${roomId}`);
+        } catch (error) {
+            console.error("Error creating room:", error);
+            toast.error("Failed to create room. Please try again.");
+        }
     };
 
     const handleJoinRoom = async () => {
@@ -38,16 +48,16 @@ export default function HomePage() {
 
             // save info so we remember who they are on page refresh
             sessionStorage.setItem("playerId", uid);
-            sessionStorage.setItem("playerName", name);
+            sessionStorage.setItem("playerName", name.trim());
 
             // update room in Firestore with guest details
-            await joinRoom(roomId, uid, name);
+            await joinRoom(roomId, uid, name.trim());
 
             // go to lobby
             navigate(`/room/${roomId}`);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error joining room:", error);
-            toast.error("Failed to join room. Please try again.");
+            toast.error(error.message || "Failed to join room. Please try again.");
         }
     };
 
