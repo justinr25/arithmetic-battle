@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 
 import { generateProblem } from "../lib/problems";
-import type { Problem, Room } from "../lib/gameTypes";
-import { finishGame, subscribeToRoom, updateScore } from "../lib/firebase";
+import type { Problem } from "../lib/gameTypes";
+import { finishGame, updateScore } from "../lib/firebase";
+import { useRoom } from "../hooks/useRoom";
+import { useGameTimer } from "../hooks/useGameTimer";
 
 export default function GamePage() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -13,77 +15,11 @@ export default function GamePage() {
     const [problemIndex, setProblemIndex] = useState<number>(0);
     const [score, setScore] = useState<number>(0);
     const [inputValue, setInputValue] = useState<string>("");
-    const [timeLeft, setTimeLeft] = useState<number | null>(null);
-    const [room, setRoom] = useState<Room | null>(null);
-    const [countdown, setCountdown] = useState<number | null>(3); // starts at 3 seconds, goes to null
+
+    const { room, loading, error } = useRoom(cleanRoomId);
+    const { countdown, timeLeft } = useGameTimer(room);
 
     const myId = sessionStorage.getItem("playerId") || "";
-
-    // subscribe to room changes
-    useEffect(() => {
-        if (!cleanRoomId) return;
-
-        const unsubscribe = subscribeToRoom(cleanRoomId, (updatedRoom) => {
-            setRoom(updatedRoom);
-        });
-
-        return unsubscribe;
-    }, [cleanRoomId]);
-
-    // 5-second countdown before game starts
-    useEffect(() => {
-        const startTime = room?.startTime;
-        if (!startTime) return;
-
-        const interval = setInterval(() => {
-            const timeUntilStart = startTime - Date.now();
-
-            if (timeUntilStart <= 0) {
-                // start the game
-                setCountdown(null);
-                clearInterval(interval);
-                return;
-            } else {
-                // count down until game starts
-                // convert milliseconds to seconds (rounded up)
-                setCountdown(Math.ceil(timeUntilStart / 1000));
-            }
-        }, 100); // update every 100ms for high accuracy
-
-        return () => clearInterval(interval);
-    }, [room?.startTime]);
-
-    // sync timeLeft with Firestore timeLimit when room loads
-    useEffect(() => {
-        if (room && timeLeft === null) {
-            setTimeLeft(room.timeLimit);
-        }
-    }, [room, timeLeft]);
-
-    // Core Timer Loop
-    useEffect(() => {
-        // only start counting down if room has startTime and countdown has finished
-        if (!room?.startTime || countdown !== null) return;
-
-        const gameEndTime = room.startTime + room.timeLimit * 1000;
-
-        const interval = setInterval(() => {
-            const now = Date.now();
-            const timeRemaining = gameEndTime - now;
-
-            if (timeRemaining <= 0) {
-                // end game
-                setTimeLeft(0);
-                clearInterval(interval);
-            } else {
-                // still playing
-                // convert milliseconds to remaining whole seconds (e.g. 100ms left -> 1s)
-                setTimeLeft(Math.ceil(timeRemaining / 1000));
-            }
-        }, 100); // update every 100ms for accuracy
-
-        return () => clearInterval(interval);
-    }, [room?.startTime, room?.timeLimit, countdown]);
 
     // Game Over Trigger (Listens for timeLeft to hit 0 and handles navigation with the LATEST score)
     useEffect(() => {
@@ -100,8 +36,23 @@ export default function GamePage() {
         }
     }, [room?.status, cleanRoomId, navigate]);
 
+    // Handle Error State
+    if (error) {
+        return (
+            <div className="container d-flex justify-content-center align-items-center min-vh-100">
+                <div className="text-center">
+                    <h3 className="text-danger mb-3">Oops!</h3>
+                    <p className="text-muted">{error}</p>
+                    <button className="btn btn-primary mt-2" onClick={() => navigate("/")}>
+                        Go Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // Guard Clause: show a loading indicator until database data AND timer are ready
-    if (!room || timeLeft === null) {
+    if (loading || !room || timeLeft === null) {
         return (
             <div className="container d-flex justify-content-center align-items-center min-vh-100">
                 <div className="text-center">

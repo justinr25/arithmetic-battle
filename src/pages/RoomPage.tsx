@@ -1,30 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-
-import type { Room } from "../lib/gameTypes";
-import { startGame, subscribeToRoom, updateTimeLimit } from "../lib/firebase";
+import { startGame, updateTimeLimit } from "../lib/firebase";
+import { useRoom } from "../hooks/useRoom";
 
 export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
     const cleanRoomId = roomId || "";
     const navigate = useNavigate();
 
-    const [room, setRoom] = useState<Room | null>(null);
+    const { room, loading, error } = useRoom(cleanRoomId);
     const [copied, setCopied] = useState<boolean>(false);
 
     const myId = sessionStorage.getItem("playerId");
     const amHost = room ? myId === room.hostId : false;
-
-    // subscribe to room changes
-    useEffect(() => {
-        if (!cleanRoomId) return;
-
-        const unsubscribe = subscribeToRoom(cleanRoomId, (updatedRoom) => {
-            setRoom(updatedRoom);
-        });
-
-        return unsubscribe;
-    }, [cleanRoomId]);
 
     // redirect if the game has already started
     useEffect(() => {
@@ -33,8 +21,23 @@ export default function RoomPage() {
         }
     }, [room?.status, cleanRoomId, navigate]);
 
+    // Handle Error State
+    if (error) {
+        return (
+            <div className="container d-flex justify-content-center align-items-center min-vh-100">
+                <div className="text-center">
+                    <h3 className="text-danger mb-3">Oops!</h3>
+                    <p className="text-muted">{error}</p>
+                    <button className="btn btn-primary mt-2" onClick={() => navigate("/")}>
+                        Go Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // Guard Clause: show a loading indicator until database data arrives
-    if (!room) {
+    if (loading || !room) {
         return (
             <div className="container d-flex justify-content-center align-items-center min-vh-100">
                 <div className="text-center">

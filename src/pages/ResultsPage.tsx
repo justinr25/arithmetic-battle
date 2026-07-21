@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router"
-import { startGame, subscribeToRoom, updateRematchRequest } from "../lib/firebase";
-import type { Room } from "../lib/gameTypes";
+import { startGame, updateRematchRequest } from "../lib/firebase";
+import { useRoom } from "../hooks/useRoom";
 
 export default function ResultsPage() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -9,18 +9,7 @@ export default function ResultsPage() {
     const navigate = useNavigate()
     const myId = sessionStorage.getItem("playerId") || ""
 
-    const [room, setRoom] = useState<Room | null>(null)
-    
-    // subscribe to room changes
-    useEffect(() => {
-        if (!cleanRoomId) return
-
-        const unsubscribe = subscribeToRoom(cleanRoomId, (updatedRoom) => {
-            setRoom(updatedRoom)
-        })
-
-        return unsubscribe
-    }, [cleanRoomId])
+    const { room, loading, error } = useRoom(cleanRoomId);
 
     // redirect if the game is started again
     useEffect(() => {
@@ -49,8 +38,23 @@ export default function ResultsPage() {
         }
     }, [room, myId, cleanRoomId])
 
+    // Handle Error State
+    if (error) {
+        return (
+            <div className="container d-flex justify-content-center align-items-center min-vh-100">
+                <div className="text-center">
+                    <h3 className="text-danger mb-3">Oops!</h3>
+                    <p className="text-muted">{error}</p>
+                    <button className="btn btn-primary mt-2" onClick={() => navigate("/")}>
+                        Go Home
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     // Guard Clause: show a loading indicator until database data arrives
-    if (!room) {
+    if (loading || !room) {
         return (
             <div className="container d-flex justify-content-center align-items-center min-vh-100">
                 <div className="text-center">

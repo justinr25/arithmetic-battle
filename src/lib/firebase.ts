@@ -88,14 +88,26 @@ export async function updateRematchRequest(roomId: string, playerId: string, req
 }
 
 // listen to real-time updates to the room document
-export function subscribeToRoom(roomId: string, callback: (room: Room) => void): () => void {
+export function subscribeToRoom(
+  roomId: string, 
+  onSuccess: (room: Room) => void,
+  onError?: (error: Error) => void
+): () => void {
   const roomRef = doc(db, "rooms", roomId)
 
-  return onSnapshot(roomRef, (snapshot) => {
-    if (snapshot.exists()) {
-      callback(snapshot.data() as Room)
+  return onSnapshot(
+    roomRef, 
+    (snapshot) => {
+      if (snapshot.exists()) {
+        onSuccess(snapshot.data() as Room)
+      } else if (onError) {
+        onError(new Error("Room not found. Please check the code and try again."))
+      }
+    },
+    (error) => {
+      if (onError) onError(error)
     }
-  })
+  )
 }
 
 // flip status to "playing" — both players' listeners will react immediately
