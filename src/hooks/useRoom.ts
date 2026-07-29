@@ -5,18 +5,23 @@ import { subscribeToRoom } from "../lib/firebase";
 export function useRoom(roomId: string | undefined) {
     // We need 3 pieces of state to fully describe the network request
     const [room, setRoom] = useState<Room | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(Boolean(roomId));
     const [error, setError] = useState<string | null>(null);
+    const [prevRoomId, setPrevRoomId] = useState<string | undefined>(roomId);
+
+    // Turn loading spinner on during render if the roomId changes to a new valid ID
+    if (roomId !== prevRoomId) {
+        setPrevRoomId(roomId);
+        if (roomId) {
+            setLoading(true);
+        }
+    }
 
     useEffect(() => {
         // Guard clause: If there is no roomId yet, don't try to fetch anything.
         if (!roomId) {
-            setLoading(false);
             return;
         }
-
-        // Before starting the fetch, ensure the loading spinner turns on.
-        setLoading(true);
 
         // Subscribe to the real-time Firebase document
         const unsubscribe = subscribeToRoom(

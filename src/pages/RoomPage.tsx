@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router";
 import { startGame, updateTimeLimit } from "../lib/firebase";
 import { useRoom } from "../hooks/useRoom";
 import toast from "react-hot-toast";
-import { Play, Copy, Check, LogOut, Clock } from "lucide-react";
 
 export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -37,7 +36,9 @@ export default function RoomPage() {
             <div className="flex justify-center items-center min-h-screen w-full">
                 <div className="text-center">
                     <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="mt-2 text-base-content/70">Connecting to lobby...</p>
+                    <p className="mt-2 text-base-content/70">
+                        Connecting to lobby...
+                    </p>
                 </div>
             </div>
         );
@@ -60,48 +61,56 @@ export default function RoomPage() {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-full p-4">
-            <div className="card bg-base-200 shadow-xl w-full max-w-md border border-base-300">
-                <div className="card-body text-center p-6">
-                    <h1 className="text-3xl font-bold mb-4">Room {cleanRoomId}</h1>
-
-                    <div className="border border-base-300 rounded-box divide-y divide-base-300 bg-base-100">
-                        <div className="p-4">
-                            <strong>{room.hostName}</strong>{" "}
-                            <span className="text-base-content/70 text-sm">(Host)</span>
-                        </div>
-                        <div className="p-4">
-                            <strong>
-                                {room.guestName || (
-                                    <span className="font-light text-base-content/70">
-                                        Waiting for opponent...
-                                    </span>
-                                )}
-                            </strong>
-                        </div>
+        <div className="flex justify-center items-center min-h-screen w-full px-6 py-12">
+            <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-start">
+                {/* Left Column: Room Code and Settings */}
+                <div className="flex flex-col gap-6 text-left">
+                    <div>
+                        <span className="text-xs uppercase tracking-widest text-base-content/60 font-bold">
+                            Lobby Code
+                        </span>
+                        <h1 className="text-5xl md:text-6xl font-black text-primary tracking-wider mt-1 mb-4">
+                            {cleanRoomId}
+                        </h1>
+                        {amHost && !room.guestId && (
+                            <button
+                                className="btn btn-outline btn-primary btn-sm font-semibold tracking-wide"
+                                onClick={handleCopyRoomId}
+                            >
+                                {copied
+                                    ? "Copied to Clipboard!"
+                                    : "Copy Room ID"}
+                            </button>
+                        )}
                     </div>
 
                     {/* adjust game settings (time) */}
                     {amHost && (
-                        <div className="mt-6 text-left">
-                            <label htmlFor="timeLimit" className="label">
-                                <span className="label-text flex items-center gap-2 text-base">
-                                    <Clock className="w-5 h-5" /> Time Limit: {room.timeLimit} seconds
+                        <div className="mt-4 bg-base-200/50 p-6 rounded-xl border border-base-300/50">
+                            <label
+                                htmlFor="timeLimit"
+                                className="label px-0 pt-0"
+                            >
+                                <span className="label-text font-semibold text-base">
+                                    Time Limit: {room.timeLimit} seconds
                                 </span>
                             </label>
                             <input
                                 type="range"
-                                className="range range-primary"
+                                className="range range-primary my-2"
                                 id="timeLimit"
                                 min="15"
                                 max="180"
                                 step="15"
                                 value={room.timeLimit}
                                 onChange={(e) =>
-                                    updateTimeLimit(cleanRoomId, Number(e.target.value))
+                                    updateTimeLimit(
+                                        cleanRoomId,
+                                        Number(e.target.value),
+                                    )
                                 }
                             />
-                            <div className="w-full flex justify-between text-xs px-2 mt-2">
+                            <div className="w-full flex justify-between text-xs text-base-content/60 px-1">
                                 <span>15s</span>
                                 <span>180s</span>
                             </div>
@@ -110,52 +119,76 @@ export default function RoomPage() {
 
                     {/* show the selected time limit to the guest */}
                     {!amHost && (
-                        <div className="mt-6 alert alert-info py-2 shadow-sm flex justify-center">
-                            <Clock className="w-5 h-5" />
-                            <span>
-                                Selected Time Limit: <strong>{room.timeLimit} seconds</strong>
-                            </span>
+                        <div className="alert bg-base-200 border border-base-300 shadow-none py-4 text-left">
+                            <div>
+                                <div className="text-xs font-semibold uppercase tracking-wider opacity-70">
+                                    Time Limit
+                                </div>
+                                <div className="text-lg font-bold text-base-content">
+                                    {room.timeLimit} seconds
+                                </div>
+                            </div>
                         </div>
                     )}
+                </div>
 
-                    {amHost && !room.guestId && (
-                        <button className="btn btn-primary mt-6 w-full" onClick={handleCopyRoomId}>
-                            {copied ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <Check className="w-5 h-5" /> Copied!
+                {/* Right Column: Player Matchup & Actions */}
+                <div className="flex flex-col gap-6 w-full bg-base-200/40 p-6 md:p-8 rounded-2xl border border-base-300/40">
+                    <div>
+                        <span className="text-xs uppercase tracking-widest text-base-content/60 font-bold mb-3 block text-left">
+                            Matchup
+                        </span>
+                        <div className="divide-y divide-base-300/50">
+                            <div className="py-3 flex justify-between items-center text-left">
+                                <span className="font-bold text-lg text-base-content">
+                                    {room.hostName}
                                 </span>
-                            ) : (
-                                <span className="flex items-center justify-center gap-2">
-                                    <Copy className="w-5 h-5" /> Copy Room ID
+                                <span className="badge badge-success badge-outline font-light">
+                                    Host
                                 </span>
-                            )}
-                        </button>
-                    )}
+                            </div>
+                            <div className="py-3 flex justify-between items-center text-left">
+                                {room.guestName ? (
+                                    <>
+                                        <span className="font-bold text-lg text-base-content">
+                                            {room.guestName}
+                                        </span>
+                                        <span className="badge badge-ghost badge-outline font-light">
+                                            Guest
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="font-light italic text-base-content/50">
+                                        Waiting for opponent...
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
-                    {amHost && room.guestId && (
+                    <div className="flex flex-col gap-3 mt-4">
+                        {amHost && room.guestId && (
+                            <button
+                                className="btn btn-success btn-lg w-full font-bold tracking-wide shadow-sm"
+                                onClick={handleStartGame}
+                            >
+                                Start Game
+                            </button>
+                        )}
+
+                        {!amHost && (
+                            <div className="text-base-content/70 text-sm font-light italic text-left py-2">
+                                Waiting for the host to start the game...
+                            </div>
+                        )}
+
                         <button
-                            className="btn btn-success btn-lg shadow-sm w-full font-semibold mt-6 flex items-center justify-center gap-2"
-                            onClick={handleStartGame}
+                            className="btn btn-ghost text-error w-full font-semibold mt-2 hover:bg-error/10"
+                            onClick={() => navigate("/")}
                         >
-                            <Play className="w-5 h-5" />
-                            Start Game
+                            Leave Room
                         </button>
-                    )}
-
-                    {!amHost && (
-                        // waiting for host to start the game
-                        <p className="text-base-content/70 mt-6 mb-0 text-sm">
-                            Waiting for the host to start the game...
-                        </p>
-                    )}
-
-                    <button 
-                        className="btn btn-outline btn-error mt-6 w-full font-semibold flex items-center justify-center gap-2"
-                        onClick={() => navigate("/")}
-                    >
-                        <LogOut className="w-5 h-5" />
-                        Leave Room
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>

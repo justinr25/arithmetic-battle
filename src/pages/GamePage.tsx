@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Clock, Trophy } from "lucide-react";
 
 import { generateProblem } from "../lib/problems";
 import type { Problem } from "../lib/gameTypes";
@@ -95,53 +94,49 @@ export default function GamePage() {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-full p-4">
-            <div className="card w-full max-w-md bg-base-200 shadow-xl">
-                <div className="card-body items-center text-center">
-                    {/* Timer */}
-                    <div className="flex items-center gap-2 mb-4">
-                        <Clock className={`w-6 h-6 ${timeLeft <= 10 ? 'text-error animate-pulse' : 'text-primary'}`} />
-                        <span className={`text-2xl font-bold ${timeLeft <= 10 ? 'text-error' : ''}`}>
-                            {timeLeft}s
-                        </span>
-                    </div>
+        <div className="flex flex-col min-h-screen w-full bg-base-100">
+            {/* Full-width minimalist Top Bar HUD */}
+            <header className="w-full px-8 py-6 flex justify-between items-center border-b border-base-300/30">
+                <div className="text-left">
+                    <span className="text-xs uppercase tracking-widest text-base-content/60 block font-semibold">You</span>
+                    <span className="text-3xl font-black text-primary">{score}</span>
+                </div>
 
-                    {/* Problem */}
-                    <h2 className="text-5xl font-bold my-6 tracking-wider">
+                <div className="text-center">
+                    <span className="text-xs uppercase tracking-widest text-base-content/60 block font-semibold">Time Remaining</span>
+                    <span className={`text-4xl font-black font-mono tracking-tight ${timeLeft <= 10 ? 'text-error animate-pulse' : 'text-base-content'}`}>
+                        {timeLeft}s
+                    </span>
+                </div>
+
+                <div className="text-right">
+                    <span className="text-xs uppercase tracking-widest text-base-content/60 block font-semibold">Opponent</span>
+                    <span className="text-3xl font-black text-secondary">{oppScore}</span>
+                </div>
+            </header>
+
+            {/* Spacious Borderless Center Stage */}
+            <main className="flex-1 flex flex-col justify-center items-center px-6 pb-20">
+                <div className="w-full max-w-lg text-center">
+                    <h2 className="text-7xl md:text-8xl font-black tracking-wider text-base-content my-8 select-none">
                         {currentProblem.a} {currentProblem.op} {currentProblem.b}
                     </h2>
-                    
-                    {/* Input */}
-                    <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        autoComplete="off"
-                        autoFocus
-                        className="input input-bordered input-lg w-full text-center text-2xl font-bold mb-6"
-                        value={inputValue}
-                        onChange={(e) => handleInputValueChange(e.target.value)}
-                    />
 
-                    {/* Scores */}
-                    <div className="w-full flex justify-between gap-4 mt-4">
-                        <div className="stat bg-base-300 rounded-box p-4 shadow-sm w-1/2">
-                            <div className="stat-figure text-primary">
-                                <Trophy className="w-6 h-6" />
-                            </div>
-                            <div className="stat-title text-sm">You</div>
-                            <div className="stat-value text-primary text-2xl">{score}</div>
-                        </div>
-                        <div className="stat bg-base-300 rounded-box p-4 shadow-sm w-1/2">
-                            <div className="stat-figure text-secondary">
-                                <Trophy className="w-6 h-6" />
-                            </div>
-                            <div className="stat-title text-sm">Opponent</div>
-                            <div className="stat-value text-secondary text-2xl">{oppScore}</div>
-                        </div>
+                    <div className="max-w-xs mx-auto">
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            autoComplete="off"
+                            autoFocus
+                            className="input input-bordered input-lg w-full text-center text-3xl font-bold h-16 shadow-inner focus:outline-primary bg-base-200/50 rounded-xl"
+                            placeholder="?"
+                            value={inputValue}
+                            onChange={(e) => handleInputValueChange(e.target.value)}
+                        />
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

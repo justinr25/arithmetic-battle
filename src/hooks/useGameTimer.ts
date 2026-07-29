@@ -3,14 +3,16 @@ import type { Room } from "../lib/gameTypes";
 
 export function useGameTimer(room: Room | null) {
     const [countdown, setCountdown] = useState<number | null>(3);
-    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [timeLeft, setTimeLeft] = useState<number | null>(room?.timeLimit ?? null);
+    const [prevTimeLimit, setPrevTimeLimit] = useState<number | undefined>(room?.timeLimit);
 
-    // Sync timeLeft with Firestore timeLimit when room first loads
-    useEffect(() => {
+    // Sync timeLeft with Firestore timeLimit during render when room first loads
+    if (room?.timeLimit !== prevTimeLimit) {
+        setPrevTimeLimit(room?.timeLimit);
         if (room && timeLeft === null) {
             setTimeLeft(room.timeLimit);
         }
-    }, [room, timeLeft]);
+    }
 
     // 1. Pre-game countdown (e.g., 3... 2... 1...)
     useEffect(() => {

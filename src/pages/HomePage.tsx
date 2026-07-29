@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { signInAnonymously } from "firebase/auth";
 import toast from "react-hot-toast";
-import { Calculator, Users, DoorOpen, ArrowLeft } from "lucide-react";
 
 import NameInput from "../components/NameInput";
 import { auth, createRoom, joinRoom } from "../lib/firebase";
@@ -56,78 +55,82 @@ export default function HomePage() {
 
             // go to lobby
             navigate(`/room/${roomId}`);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error joining room:", error);
-            toast.error(error.message || "Failed to join room. Please try again.");
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to join room. Please try again.";
+            toast.error(errorMessage);
         }
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-full p-4">
-            <div className="card bg-base-200 shadow-xl p-6 text-center w-full max-w-md">
-                <h1 className="text-primary mb-2 font-bold text-3xl flex items-center justify-center">
-                    <Calculator className="w-8 h-8 mr-2" />
-                    Arithmetic Battle
-                </h1>
-                <p className="text-base-content/70 text-sm mb-4">
-                    Challenge players to a real-time mental math duel
-                </p>
-
-                {/* Pass down the 'name' state and the 'setName' function as props */}
-                {!isJoining && <NameInput value={name} onChange={setName} />}
-
-                {/* Render the greeting dynamically when name is typed */}
-                {name && !isJoining ? (
-                    <div className="flex flex-col gap-3 mt-4">
-                        <div className="alert alert-success shadow-sm">
-                            <span className="font-semibold">Hello, {name}!</span>{" "}
-                            👋 Ready to play?
-                        </div>
-
-                        <button
-                            className="btn btn-success btn-lg w-full font-semibold shadow-sm"
-                            onClick={handleCreateRoom}
-                        >
-                            <Users className="w-5 h-5 mr-2" />
-                            Create Room
-                        </button>
-
-                        <button
-                            className="btn btn-primary btn-lg w-full font-semibold shadow-sm"
-                            onClick={() => setIsJoining(true)}
-                        >
-                            <DoorOpen className="w-5 h-5 mr-2" />
-                            Join Room
-                        </button>
-                    </div>
-                ) : name && isJoining ? (
-                    <div className="flex flex-col gap-3 mt-4">
-                        {/* room code input field */}
-                        <RoomIdInput value={roomId} onChange={setRoomId} />
-
-                        {/* join room button */}
-                        <button
-                            className="btn btn-primary btn-lg w-full font-semibold shadow-sm"
-                            onClick={handleJoinRoom}
-                        >
-                            <DoorOpen className="w-5 h-5 mr-2" />
-                            Join Room
-                        </button>
-
-                        {/* back to options button */}
-                        <button
-                            className="btn btn-secondary btn-lg w-full font-semibold shadow-sm"
-                            onClick={() => setIsJoining(false)}
-                        >
-                            <ArrowLeft className="w-5 h-5 mr-2" />
-                            Back to options
-                        </button>
-                    </div>
-                ) : (
-                    <p className="text-base-content/70 mt-4 text-sm">
-                        Start typing above to register your player name.
+        <div className="flex justify-center items-center min-h-screen w-full px-6 py-12">
+            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
+                {/* Left Column: Clean bold typography */}
+                <div className="text-left">
+                    <h1 className="text-primary font-black text-5xl md:text-6xl tracking-tight mb-4">
+                        Arithmetic Battle
+                    </h1>
+                    <p className="text-base-content/80 text-lg md:text-xl font-light leading-relaxed max-w-md">
+                        Challenge players to a real-time mental math duel. Fast-paced, competitive arithmetic with no distraction.
                     </p>
-                )}
+                </div>
+
+                {/* Right Column: Roomy uncluttered controls */}
+                <div className="w-full max-w-md mx-auto md:mx-0">
+                    {/* Pass down the 'name' state and the 'setName' function as props */}
+                    {!isJoining && <NameInput value={name} onChange={setName} />}
+
+                    {/* Render the greeting dynamically when name is typed */}
+                    {name && !isJoining ? (
+                        <div className="flex flex-col gap-4 mt-4">
+                            <div className="alert bg-success/10 text-success border border-success/20 py-3 px-4 rounded-lg">
+                                <div>
+                                    <span className="font-bold">Hello, {name}!</span> Ready to play?
+                                </div>
+                            </div>
+
+                            <button
+                                className="btn btn-primary btn-lg w-full font-bold tracking-wide shadow-sm"
+                                onClick={handleCreateRoom}
+                            >
+                                Create Room
+                            </button>
+
+                            <button
+                                className="btn btn-neutral btn-outline btn-lg w-full font-bold tracking-wide"
+                                onClick={() => setIsJoining(true)}
+                            >
+                                Join Room
+                            </button>
+                        </div>
+                    ) : name && isJoining ? (
+                        <div className="flex flex-col gap-4 mt-4">
+                            {/* Subtle back navigation */}
+                            <button
+                                className="btn btn-ghost btn-sm self-start text-base-content/70 hover:text-base-content font-normal pl-0"
+                                onClick={() => setIsJoining(false)}
+                            >
+                                ← Back to options
+                            </button>
+
+                            {/* room code input field */}
+                            <RoomIdInput value={roomId} onChange={setRoomId} />
+
+                            {/* join room button */}
+                            <button
+                                className="btn btn-primary btn-lg w-full font-bold tracking-wide shadow-sm"
+                                onClick={handleJoinRoom}
+                            >
+                                Join Room
+                            </button>
+                        </div>
+                    ) : (
+                        <p className="text-base-content/60 mt-4 text-sm font-light">
+                            Start typing above to register your player display name.
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );
