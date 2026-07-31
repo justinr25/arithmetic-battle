@@ -58,35 +58,37 @@ export default function HomePage() {
         } catch (error: unknown) {
             console.error("Error joining room:", error);
             const errorMessage =
-                error instanceof Error ? error.message : "Failed to join room. Please try again.";
+                error instanceof Error
+                    ? error.message
+                    : "Failed to join room. Please try again.";
             toast.error(errorMessage);
         }
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-full px-6 py-12">
-            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
-                {/* Left Column: Clean bold typography */}
-                <div className="text-left">
-                    <h1 className="text-primary font-black text-5xl md:text-6xl tracking-tight mb-4">
-                        Arithmetic Battle
-                    </h1>
-                    <p className="text-base-content/80 text-lg md:text-xl font-light leading-relaxed max-w-md">
-                        Challenge players to a real-time mental math duel. Fast-paced, competitive arithmetic with no distraction.
-                    </p>
-                </div>
+        <div className="flex flex-col justify-center items-center min-h-screen w-full px-6 py-16 text-center">
+            <div className="w-full max-w-2xl flex flex-col items-center">
+                {/* Clean bold typography in a generous single-column flow */}
+                <h1 className="text-primary font-black text-6xl md:text-7xl tracking-tight mb-20 select-none">
+                    Arithmetic Battle
+                </h1>
 
-                {/* Right Column: Roomy uncluttered controls */}
-                <div className="w-full max-w-md mx-auto md:mx-0">
+                {/* Roomy uncluttered controls without claustrophobic card boundaries */}
+                <div className="w-full max-w-md text-left">
                     {/* Pass down the 'name' state and the 'setName' function as props */}
-                    {!isJoining && <NameInput value={name} onChange={setName} />}
+                    {!isJoining && (
+                        <NameInput value={name} onChange={setName} />
+                    )}
 
                     {/* Render the greeting dynamically when name is typed */}
                     {name && !isJoining ? (
-                        <div className="flex flex-col gap-4 mt-4">
-                            <div className="alert bg-success/10 text-success border border-success/20 py-3 px-4 rounded-lg">
+                        <div className="flex flex-col gap-4 mt-2">
+                            <div className="alert bg-success/10 text-success border border-success/20 py-3 px-4 rounded-lg text-center justify-center">
                                 <div>
-                                    <span className="font-bold">Hello, {name}!</span> Ready to play?
+                                    <span className="font-bold">
+                                        Hello, {name}!
+                                    </span>{" "}
+                                    Ready to play?
                                 </div>
                             </div>
 
@@ -105,7 +107,7 @@ export default function HomePage() {
                             </button>
                         </div>
                     ) : name && isJoining ? (
-                        <div className="flex flex-col gap-4 mt-4">
+                        <div className="flex flex-col gap-4 mt-2">
                             {/* Subtle back navigation */}
                             <button
                                 className="btn btn-ghost btn-sm self-start text-base-content/70 hover:text-base-content font-normal pl-0"
@@ -126,8 +128,9 @@ export default function HomePage() {
                             </button>
                         </div>
                     ) : (
-                        <p className="text-base-content/60 mt-4 text-sm font-light">
-                            Start typing above to register your player display name.
+                        <p className="text-base-content/60 mt-2 text-sm font-light text-center">
+                            Start typing above to register your player display
+                            name.
                         </p>
                     )}
                 </div>
