@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore, doc, setDoc, updateDoc, onSnapshot, getDoc } from 'firebase/firestore'
+import { getFirestore, doc, setDoc, updateDoc, onSnapshot, getDoc, increment, collection, query, orderBy, limit } from 'firebase/firestore'
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
 import type { Room } from './gameTypes'
 
@@ -144,7 +144,111 @@ export async function finishGame(roomId: string): Promise<void> {
 const googleProvider = new GoogleAuthProvider()
 
 export async function signInWithGoogle() {
-    return signInWithPopup(auth, googleProvider)
+    const result = await signInWithPopup(auth, googleProvider);
+    if (result.user) {
+        await initUserDoc(result.user.uid, result.user.displayName || "Player");
+    }
+    return result;
+}
+
+export interface UserStats {
+    personalBest: number;
+    totalGames: number;
+    displayName: string;
+}
+
+export async function initUserDoc(uid: string, displayName: string): Promise<void> {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+        await setDoc(userRef, {
+            personalBest: 0,
+            totalGames: 0,
+            displayName
+        });
+    }
+}
+
+export interface MatchRecord {
+    id: string; // The original roomId
+    timestamp: number; // For sorting
+    opponentName: string; // Exact name at the time
+    myScore: number;
+    opponentScore: number;
+    outcome: "win" | "loss" | "draw";
+    timeLimit: number;
+}
+
+export async function recordUserMatch(uid: string, room: Room): Promise<void> {
+    const isHost = uid === room.hostId;
+    const opponentId = isHost ? room.guestId : room.hostId;
+    const opponentName = isHost ? room.guestName : room.hostName;
+    const myScore = room.scores[uid] || 0;
+    const opponentScore = opponentId ? (room.scores[opponentId] || 0) : 0;
+    
+    let outcome: "win" | "loss" | "draw" = "draw";
+    if (myScore > opponentScore) outcome = "win";
+    else if (myScore < opponentScore) outcome = "loss";
+    
+    const matchRecord: MatchRecord = {
+        id: room.id,
+        timestamp: Date.now(),
+        opponentName: opponentName || "Unknown",
+        myScore,
+        opponentScore,
+        outcome,
+        timeLimit: room.timeLimit || 60
+    };
+
+    const userRef = doc(db, "users", uid);
+    const matchRef = doc(db, "users", uid, "matches", room.id);
+
+    // Save match
+    await setDoc(matchRef, matchRecord);
+
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+        const data = userSnap.data() as UserStats;
+        const updates: any = {
+            totalGames: increment(1)
+        };
+        if (myScore > data.personalBest) {
+            updates.personalBest = myScore;
+        }
+        await updateDoc(userRef, updates);
+    } else {
+        await setDoc(userRef, {
+            personalBest: myScore,
+            totalGames: 1,
+            displayName: "Player"
+        });
+    }
+}
+
+export function subscribeToMatchHistory(
+  uid: string,
+  onSuccess: (matches: MatchRecord[]) => void
+): () => void {
+  const matchesRef = collection(db, "users", uid, "matches");
+  const q = query(matchesRef, orderBy("timestamp", "desc"), limit(20));
+  
+  return onSnapshot(q, (snapshot) => {
+      const matches: MatchRecord[] = [];
+      snapshot.forEach((doc) => matches.push(doc.data() as MatchRecord));
+      onSuccess(matches);
+  });
+}
+
+export function subscribeToUser(
+  uid: string,
+  onSuccess: (stats: UserStats) => void
+): () => void {
+  const userRef = doc(db, "users", uid);
+  return onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+          onSuccess(snapshot.data() as UserStats);
+      }
+  });
 }
 
 export async function signOutUser() {

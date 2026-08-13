@@ -1,13 +1,19 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 import { ChevronLeft } from "lucide-react";
 
 export default function ProfilePage() {
-    const { user, isLoggedIn, signOut } = useAuth();
+    const { user, isLoggedIn, signOut, userStats, matchHistory, loading } = useAuth();
     const navigate = useNavigate();
 
-    if (!isLoggedIn || !user) {
-        navigate("/");
+    useEffect(() => {
+        if (!loading && (!isLoggedIn || !user)) {
+            navigate("/");
+        }
+    }, [isLoggedIn, user, loading, navigate]);
+
+    if (loading || !isLoggedIn || !user) {
         return null;
     }
 
@@ -51,18 +57,50 @@ export default function ProfilePage() {
                         <span className="text-overlay0 text-xs font-bold tracking-widest uppercase mb-1">
                             Personal Best
                         </span>
-                        <span className="text-2xl font-bold text-mauve">0</span>
+                        <span className="text-2xl font-bold text-mauve">
+                            {userStats?.personalBest || 0}
+                        </span>
                     </div>
                     <div className="flex flex-col items-center">
                         <span className="text-overlay0 text-xs font-bold tracking-widest uppercase mb-1">
                             Total Games
                         </span>
-                        <span className="text-2xl font-bold text-mauve">0</span>
+                        <span className="text-2xl font-bold text-mauve">
+                            {userStats?.totalGames || 0}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <div className="w-full max-w-xs animate-fade-in" style={{animationDelay: '0.1s'}}>
+            <h3 className="text-2xl font-bold tracking-tight text-text mt-12 mb-4">Match History</h3>
+            <div className="w-full max-w-lg flex flex-col gap-3 mb-12 animate-fade-in" style={{animationDelay: '0.1s'}}>
+                {matchHistory.length === 0 ? (
+                    <p className="text-overlay0 text-center py-4 italic">No matches played yet.</p>
+                ) : (
+                    matchHistory.map((match) => (
+                        <div key={match.id} className="flex items-center justify-between bg-surface0 border border-surface1 p-4 rounded-xl shadow-sm">
+                            <div className="flex flex-col">
+                                <span className="font-bold text-text">vs {match.opponentName}</span>
+                                <span className="text-xs text-subtext0 font-bold uppercase tracking-widest mt-1">{match.timeLimit}s Match</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-xl font-bold tracking-widest text-text">
+                                    {match.myScore} - {match.opponentScore}
+                                </span>
+                                <span className={`px-3 py-1 rounded font-bold text-xs uppercase tracking-widest ${
+                                    match.outcome === 'win' ? 'bg-green/10 text-green' :
+                                    match.outcome === 'loss' ? 'bg-red/10 text-red' :
+                                    'bg-overlay0/10 text-overlay0'
+                                }`}>
+                                    {match.outcome}
+                                </span>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            <div className="w-full max-w-xs animate-fade-in" style={{animationDelay: '0.2s'}}>
                 <button 
                     className="w-full bg-surface0 hover:bg-surface1 text-red border border-surface1 py-4 rounded-lg font-bold transition-colors uppercase tracking-widest"
                     onClick={handleSignOut}
