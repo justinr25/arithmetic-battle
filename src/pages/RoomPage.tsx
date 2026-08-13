@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { startGame, updateTimeLimit } from "../lib/firebase";
 import { useRoom } from "../hooks/useRoom";
-import toast from "react-hot-toast";
 
 export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -15,31 +14,22 @@ export default function RoomPage() {
     const myId = sessionStorage.getItem("playerId");
     const amHost = room ? myId === room.hostId : false;
 
-    // redirect if the game has already started
     useEffect(() => {
         if (room?.status === "playing") {
             navigate(`/game/${cleanRoomId}`);
         }
     }, [room?.status, cleanRoomId, navigate]);
 
-    // Handle Error State: Automatically redirect to home
     useEffect(() => {
         if (error) {
-            toast.error(error);
             navigate("/");
         }
     }, [error, navigate]);
 
-    // Guard Clause: show a loading indicator until database data arrives (or if we are redirecting due to error)
     if (loading || !room || error) {
         return (
-            <div className="flex justify-center items-center min-h-screen w-full">
-                <div className="text-center">
-                    <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="mt-2 text-base-content/70">
-                        Connecting to lobby...
-                    </p>
-                </div>
+            <div className="flex justify-center items-center min-h-screen bg-base font-sans text-subtext0">
+                LOADING...
             </div>
         );
     }
@@ -49,147 +39,105 @@ export default function RoomPage() {
             navigator.clipboard.writeText(cleanRoomId);
             setCopied(true);
             setTimeout(() => setCopied(false), 1000);
-        } catch (err) {
-            console.error("Failed to copy room code:", err);
+        } catch {
+            // ignore error
         }
     };
 
     const handleStartGame = () => {
-        console.log("Starting game...");
         startGame(cleanRoomId);
-        navigate(`/game/${cleanRoomId}`);
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-full px-6 py-12">
-            <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-start">
-                {/* Left Column: Room Code and Settings */}
-                <div className="flex flex-col gap-6 text-left">
-                    <div>
-                        <span className="text-xs uppercase tracking-widest text-base-content/60 font-bold">
-                            Lobby Code
-                        </span>
-                        <h1 className="text-5xl md:text-6xl font-black text-primary tracking-wider mt-1 mb-4">
-                            {cleanRoomId}
-                        </h1>
-                        {amHost && !room.guestId && (
-                            <button
-                                className="btn btn-outline btn-primary btn-sm font-semibold tracking-wide"
-                                onClick={handleCopyRoomId}
-                            >
-                                {copied
-                                    ? "Copied to Clipboard!"
-                                    : "Copy Room ID"}
-                            </button>
-                        )}
-                    </div>
-
-                    {/* adjust game settings (time) */}
-                    {amHost && (
-                        <div className="mt-4 bg-base-200/50 p-6 rounded-xl border border-base-300/50">
-                            <label
-                                htmlFor="timeLimit"
-                                className="label px-0 pt-0"
-                            >
-                                <span className="label-text font-semibold text-base">
-                                    Time Limit: {room.timeLimit} seconds
-                                </span>
-                            </label>
-                            <input
-                                type="range"
-                                className="range range-primary my-2"
-                                id="timeLimit"
-                                min="15"
-                                max="180"
-                                step="15"
-                                value={room.timeLimit}
-                                onChange={(e) =>
-                                    updateTimeLimit(
-                                        cleanRoomId,
-                                        Number(e.target.value),
-                                    )
-                                }
-                            />
-                            <div className="w-full flex justify-between text-xs text-base-content/60 px-1">
-                                <span>15s</span>
-                                <span>180s</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* show the selected time limit to the guest */}
-                    {!amHost && (
-                        <div className="alert bg-base-200 border border-base-300 shadow-none py-4 text-left">
-                            <div>
-                                <div className="text-xs font-semibold uppercase tracking-wider opacity-70">
-                                    Time Limit
-                                </div>
-                                <div className="text-lg font-bold text-base-content">
-                                    {room.timeLimit} seconds
-                                </div>
-                            </div>
-                        </div>
-                    )}
+        <div className="flex flex-col items-center min-h-screen bg-base text-text font-sans relative px-8 py-12 justify-center">
+            
+            <div className="w-full text-center mb-16 animate-fade-in">
+                <div className="text-overlay0 text-xs font-bold uppercase tracking-widest mb-2">
+                    Room Code
                 </div>
+                <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-mauve mb-6">
+                    {cleanRoomId}
+                </h1>
+                {amHost && !room.guestId && (
+                    <button
+                        className="bg-surface0 hover:bg-surface1 text-text px-6 py-2 rounded-lg text-sm font-bold transition-colors border border-surface1"
+                        onClick={handleCopyRoomId}
+                    >
+                        {copied ? "Copied!" : "Copy Code"}
+                    </button>
+                )}
+            </div>
 
-                {/* Right Column: Player Matchup & Actions */}
-                <div className="flex flex-col gap-6 w-full bg-base-200/40 p-6 md:p-8 rounded-2xl border border-base-300/40">
-                    <div>
-                        <span className="text-xs uppercase tracking-widest text-base-content/60 font-bold mb-3 block text-left">
-                            Matchup
-                        </span>
-                        <div className="divide-y divide-base-300/50">
-                            <div className="py-3 flex justify-between items-center text-left">
-                                <span className="font-bold text-lg text-base-content">
-                                    {room.hostName}
-                                </span>
-                                <span className="badge badge-success badge-outline font-light">
-                                    Host
-                                </span>
-                            </div>
-                            <div className="py-3 flex justify-between items-center text-left">
-                                {room.guestName ? (
-                                    <>
-                                        <span className="font-bold text-lg text-base-content">
-                                            {room.guestName}
-                                        </span>
-                                        <span className="badge badge-ghost badge-outline font-light">
-                                            Guest
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span className="font-light italic text-base-content/50">
-                                        Waiting for opponent...
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+            <div className="w-full max-w-md bg-surface0 rounded-2xl p-6 mb-12 border border-surface1 animate-fade-in" style={{animationDelay: '0.1s'}}>
+                <div className="text-overlay0 text-xs font-bold uppercase tracking-widest mb-6 border-b border-surface1 pb-2">
+                    Players
+                </div>
+                <div className="flex flex-col gap-6">
+                    <div className="flex justify-between items-center text-text">
+                        <span className="font-bold text-xl">{room.hostName}</span>
+                        <span className="text-xs text-overlay0 font-bold uppercase tracking-widest">Host</span>
                     </div>
-
-                    <div className="flex flex-col gap-3 mt-4">
-                        {amHost && room.guestId && (
-                            <button
-                                className="btn btn-success btn-lg w-full font-bold tracking-wide shadow-sm"
-                                onClick={handleStartGame}
-                            >
-                                Start Game
-                            </button>
+                    <div className="flex justify-between items-center text-text">
+                        {room.guestName ? (
+                            <>
+                                <span className="font-bold text-xl">{room.guestName}</span>
+                                <span className="text-xs text-overlay0 font-bold uppercase tracking-widest">Guest</span>
+                            </>
+                        ) : (
+                            <span className="text-overlay0 italic">Waiting for opponent...</span>
                         )}
-
-                        {!amHost && (
-                            <div className="text-base-content/70 text-sm font-light italic text-left py-2">
-                                Waiting for the host to start the game...
-                            </div>
-                        )}
-
-                        <button
-                            className="btn btn-ghost text-error w-full font-semibold mt-2 hover:bg-error/10"
-                            onClick={() => navigate("/")}
-                        >
-                            Leave Room
-                        </button>
                     </div>
                 </div>
+            </div>
+
+            {amHost && (
+                <div className="w-full max-w-md mb-12 animate-fade-in" style={{animationDelay: '0.2s'}}>
+                    <div className="flex justify-between text-overlay0 text-xs font-bold uppercase tracking-widest mb-4">
+                        <span>Time Limit</span>
+                        <span className="text-text">{room.timeLimit}s</span>
+                    </div>
+                    <input
+                        type="range"
+                        className="w-full h-2 bg-surface0 rounded-lg appearance-none cursor-pointer accent-mauve"
+                        min="15"
+                        max="180"
+                        step="15"
+                        value={room.timeLimit}
+                        onChange={(e) => updateTimeLimit(cleanRoomId, Number(e.target.value))}
+                    />
+                </div>
+            )}
+            {!amHost && (
+                <div className="w-full max-w-md mb-12 flex justify-between text-overlay0 text-xs font-bold uppercase tracking-widest border-b border-surface1 pb-2 animate-fade-in" style={{animationDelay: '0.2s'}}>
+                    <span>Time Limit</span>
+                    <span className="text-text">{room.timeLimit}s</span>
+                </div>
+            )}
+
+            <div className="w-full max-w-md flex flex-col gap-4 animate-fade-in" style={{animationDelay: '0.3s'}}>
+                {amHost && room.guestId ? (
+                    <button
+                        className="w-full bg-mauve hover:opacity-90 text-base py-4 rounded-lg font-bold text-lg transition-opacity"
+                        onClick={handleStartGame}
+                    >
+                        Start Game
+                    </button>
+                ) : !amHost && !room.guestId ? (
+                    <div className="text-subtext0 text-center py-4 font-bold border border-surface1 rounded-lg border-dashed">
+                        Joining...
+                    </div>
+                ) : !amHost ? (
+                    <div className="text-subtext0 text-center py-4 font-bold border border-surface1 rounded-lg border-dashed">
+                        Waiting for Host to start
+                    </div>
+                ) : null}
+
+                <button
+                    className="w-full text-overlay0 hover:text-text text-sm py-4 font-bold transition-colors"
+                    onClick={() => navigate("/")}
+                >
+                    Leave Room
+                </button>
             </div>
         </div>
     );

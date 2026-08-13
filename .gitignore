@@ -25,3 +25,5 @@ dist-ssr
 
 .env
 learning_guide.md
+CONTEXT.md
+docs/

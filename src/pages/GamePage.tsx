@@ -1,142 +1,134 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
-
-import { generateProblem } from "../lib/problems";
-import type { Problem } from "../lib/gameTypes";
-import { finishGame, updateScore } from "../lib/firebase";
+import { updateScore, finishGame } from "../lib/firebase";
+import { RotateCcw } from "lucide-react";
 import { useRoom } from "../hooks/useRoom";
 import { useGameTimer } from "../hooks/useGameTimer";
-import toast from "react-hot-toast";
+import { generateProblem } from "../lib/problems";
 
 export default function GamePage() {
     const { roomId } = useParams<{ roomId: string }>();
     const cleanRoomId = roomId || "";
     const navigate = useNavigate();
-
-    const [problemIndex, setProblemIndex] = useState<number>(0);
-    const [score, setScore] = useState<number>(0);
-    const [inputValue, setInputValue] = useState<string>("");
-
     const { room, loading, error } = useRoom(cleanRoomId);
-    const { countdown, timeLeft } = useGameTimer(room);
 
-    const myId = sessionStorage.getItem("playerId") || "";
+    const [input, setInput] = useState("");
 
-    // Game Over Trigger (Listens for timeLeft to hit 0 and handles navigation with the LATEST score)
+    const myId = sessionStorage.getItem("playerId");
+
+    const { timeLeft } = useGameTimer(room);
+    const isFinished = timeLeft === 0;
+
     useEffect(() => {
-        if (timeLeft === 0) {
-            // mark game as finished in Firestore
-            finishGame(cleanRoomId);
+        if (isFinished && room?.status === "playing") {
+            const end = async () => {
+                if (myId === room.hostId) {
+                    await finishGame(cleanRoomId);
+                }
+            };
+            end();
         }
-    }, [timeLeft, cleanRoomId]);
-
-    // Game Finished Redirect (Listens for status to flip to "finished" and handles navigation)
-    useEffect(() => {
         if (room?.status === "finished") {
             navigate(`/results/${cleanRoomId}`);
         }
-    }, [room?.status, cleanRoomId, navigate]);
+    }, [isFinished, room?.status, cleanRoomId, navigate, myId, room?.hostId]);
 
-    // Handle Error State: Automatically redirect to home
     useEffect(() => {
         if (error) {
-            toast.error(error);
             navigate("/");
         }
     }, [error, navigate]);
 
-    // Guard Clause: show a loading indicator until database data AND timer are ready (or if we are redirecting due to error)
-    if (loading || !room || timeLeft === null || error) {
-        return (
-            <div className="flex justify-center items-center min-h-screen w-full">
-                <div className="text-center">
-                    <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="mt-2 text-base-content/70">Loading game...</p>
-                </div>
-            </div>
-        );
+    // Problem Generation Seeded
+    const myScore = room?.scores?.[myId || ""] || 0;
+    let problem = { a: 0, b: 0, op: '+', answer: 0 } as ReturnType<typeof generateProblem>;
+    if (room?.seed) {
+        problem = generateProblem(room.seed, myScore);
     }
 
-    // render countdown until game starts
-    if (countdown !== null) {
-        return (
-            <div className="flex justify-center items-center min-h-screen w-full">
-                <div className="text-center">
-                    <h1 className="text-9xl font-bold text-primary animate-pulse">
-                        {countdown}
-                    </h1>
-                    <p className="text-2xl mt-4 text-base-content/70">Get Ready...</p>
-                </div>
-            </div>
-        );
-    }
+    // Replace '*' and '/' with nice symbols
+    let opSymbol: string = problem.op;
+    if (problem.op === '*') opSymbol = '×';
+    if (problem.op === '/') opSymbol = '÷';
+    const problemText = `${problem.a} ${opSymbol} ${problem.b}`;
 
-    // retrieve seed from Firestore
-    const seed = room.seed;
-    const currentProblem: Problem = generateProblem(seed, problemIndex);
-    const oppId = room.hostId === myId ? room.guestId : room.hostId;
-    const oppScore = oppId ? (room.scores[oppId] ?? 0) : 0;
-
-    const handleInputValueChange = (value: string) => {
-        // Restrict input strictly to digits 0-9 (allow clearing with empty string)
-        if (value !== "" && !/^[0-9]*$/.test(value)) return;
-        setInputValue(value);
-        const numValue = Number(value);
-        if (isNaN(numValue)) return;
-
-        // increment score and reset input if correct
-        if (numValue === currentProblem.answer) {
-            setScore(score + 1);
-            setProblemIndex(problemIndex + 1);
-            updateScore(cleanRoomId, myId, score + 1);
-            setInputValue("");
+    const handleNumberClick = useCallback((num: string) => {
+        if (input.length < 5) {
+            setInput((prev) => prev + num);
         }
-    };
+    }, [input]);
+
+    const handleBackspace = useCallback(() => {
+        setInput((prev) => prev.slice(0, -1));
+    }, []);
+
+    useEffect(() => {
+        if (input && parseInt(input) === problem.answer && myId) {
+            updateScore(cleanRoomId, myId, myScore + 1);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setInput("");
+        }
+    }, [input, problem.answer, myId, cleanRoomId, myScore]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key >= "0" && e.key <= "9") {
+                handleNumberClick(e.key);
+            } else if (e.key === "Backspace") {
+                handleBackspace();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleNumberClick, handleBackspace]);
+
+    if (loading || !room || error) {
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-base text-subtext0 font-sans">
+                LOADING...
+            </div>
+        );
+    }
 
     return (
-        <div className="flex flex-col min-h-screen w-full bg-base-100">
-            {/* Full-width minimalist Top Bar HUD */}
-            <header className="w-full px-8 py-6 flex justify-between items-center border-b border-base-300/30">
-                <div className="text-left">
-                    <span className="text-xs uppercase tracking-widest text-base-content/60 block font-semibold">You</span>
-                    <span className="text-3xl font-black text-primary">{score}</span>
-                </div>
-
-                <div className="text-center">
-                    <span className="text-xs uppercase tracking-widest text-base-content/60 block font-semibold">Time Remaining</span>
-                    <span className={`text-4xl font-black font-mono tracking-tight ${timeLeft <= 10 ? 'text-error animate-pulse' : 'text-base-content'}`}>
-                        {timeLeft}s
-                    </span>
-                </div>
-
-                <div className="text-right">
-                    <span className="text-xs uppercase tracking-widest text-base-content/60 block font-semibold">Opponent</span>
-                    <span className="text-3xl font-black text-secondary">{oppScore}</span>
-                </div>
-            </header>
-
-            {/* Spacious Borderless Center Stage */}
-            <main className="flex-1 flex flex-col justify-center items-center px-6 pb-20">
-                <div className="w-full max-w-lg text-center">
-                    <h2 className="text-7xl md:text-8xl font-black tracking-wider text-base-content my-8 select-none">
-                        {currentProblem.a} {currentProblem.op} {currentProblem.b}
-                    </h2>
-
-                    <div className="max-w-xs mx-auto">
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            autoComplete="off"
-                            autoFocus
-                            className="input input-bordered input-lg w-full text-center text-3xl font-bold h-16 shadow-inner focus:outline-primary bg-base-200/50 rounded-xl"
-                            placeholder="?"
-                            value={inputValue}
-                            onChange={(e) => handleInputValueChange(e.target.value)}
-                        />
+        <div className="flex flex-col min-h-screen w-full px-8 py-8 bg-base text-text relative font-sans">
+            {/* Top Bar */}
+            <div className="flex justify-between items-start w-full max-w-5xl mx-auto">
+                <div className="flex gap-12">
+                    <div className="flex flex-col">
+                        <span className="text-subtext0 text-xs font-bold tracking-widest uppercase mb-1">Time</span>
+                        <span className="text-3xl font-bold">{timeLeft}s</span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-subtext0 text-xs font-bold tracking-widest uppercase mb-1">Score</span>
+                        <span className="text-3xl font-bold">{myScore}</span>
                     </div>
                 </div>
-            </main>
+                {/* Restart icon */}
+                <button
+                    className="p-3 text-subtext0 hover:text-red transition-colors rounded-full hover:bg-surface0"
+                    onClick={() => navigate("/")}
+                >
+                    <RotateCcw size={20} />
+                </button>
+            </div>
+
+            {/* Center Play Area */}
+            <div className="flex-1 flex flex-col items-center justify-center">
+                <h2 className="text-6xl md:text-7xl font-bold mb-8 select-none tracking-tight text-text">
+                    {problemText}
+                </h2>
+                
+                {/* Input Area */}
+                <div className="relative flex items-center justify-center min-w-[200px] mb-24">
+                    <div className="text-5xl md:text-6xl font-bold text-mauve tracking-widest flex items-center h-20">
+                        {input}
+                        <span className="inline-block w-1 h-14 bg-pink animate-blink ml-1"></span>
+                    </div>
+                    {/* Line underneath */}
+                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-48 h-1 bg-surface1"></div>
+                </div>
+            </div>
         </div>
     );
 }

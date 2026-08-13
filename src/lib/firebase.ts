@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore, doc, setDoc, updateDoc, onSnapshot, getDoc } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
 import type { Room } from './gameTypes'
 
 const firebaseConfig = {
@@ -138,4 +138,15 @@ export async function startGame(roomId: string): Promise<void> {
 export async function finishGame(roomId: string): Promise<void> {
     const roomRef = doc(db, "rooms", roomId)
     await updateDoc(roomRef, { status: "finished" })
+}
+
+// Google Auth Helpers
+const googleProvider = new GoogleAuthProvider()
+
+export async function signInWithGoogle() {
+    return signInWithPopup(auth, googleProvider)
+}
+
+export async function signOutUser() {
+    return signOut(auth)
 }
