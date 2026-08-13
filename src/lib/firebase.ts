@@ -146,7 +146,7 @@ const googleProvider = new GoogleAuthProvider()
 export async function signInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
-        await initUserDoc(result.user.uid, result.user.displayName || "Player");
+        await initUserDoc(result.user.uid);
     }
     return result;
 }
@@ -157,16 +157,25 @@ export interface UserStats {
     displayName: string;
 }
 
-export async function initUserDoc(uid: string, displayName: string): Promise<void> {
+export async function initUserDoc(uid: string): Promise<void> {
     const userRef = doc(db, "users", uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
+        const randomId = Math.floor(Math.random() * 10000);
         await setDoc(userRef, {
             personalBest: 0,
             totalGames: 0,
-            displayName
+            displayName: `Player${randomId}`
         });
     }
+}
+
+export async function updateUserDisplayName(uid: string, newName: string): Promise<void> {
+    if (!newName.trim()) return;
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+        displayName: newName.trim()
+    });
 }
 
 export interface MatchRecord {

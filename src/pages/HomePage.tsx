@@ -7,7 +7,7 @@ import AuthModal from "../components/AuthModal";
 import { User, LogIn, Play } from "lucide-react";
 
 export default function HomePage() {
-    const { user, isLoggedIn } = useAuth();
+    const { isLoggedIn, userStats } = useAuth();
     const [name, setName] = useState<string>("");
     const [isJoining, setIsJoining] = useState<boolean>(false);
     const [roomId, setRoomId] = useState<string>("");
@@ -15,14 +15,16 @@ export default function HomePage() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (isLoggedIn && user?.displayName) {
+        if (isLoggedIn && userStats?.displayName) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setName(user.displayName);
-        } else {
+            setName(userStats.displayName);
+        } else if (!isLoggedIn) {
             // Assign a random fun name if not logged in
-            setName((prev) => prev || `Guest${Math.floor(Math.random() * 1000)}`);
+            setName(
+                (prev) => prev || `Guest${Math.floor(Math.random() * 1000)}`,
+            );
         }
-    }, [isLoggedIn, user]);
+    }, [isLoggedIn, userStats]);
 
     const getOrSignInUser = async () => {
         if (isLoggedIn && auth.currentUser) return auth.currentUser.uid;
@@ -51,9 +53,9 @@ export default function HomePage() {
     return (
         <div className="flex flex-col min-h-screen bg-base text-text relative px-8 py-8">
             {/* Header */}
-            <div className="flex justify-end items-center w-full max-w-7xl mx-auto text-subtext0 text-sm font-medium">
+            <div className="absolute top-8 right-8 text-subtext0 text-sm font-medium z-10">
                 <button
-                    className="flex items-center gap-2 hover:text-text transition-colors"
+                    className="flex items-center gap-2 hover:text-text transition-colors font-bold tracking-widest"
                     onClick={() =>
                         isLoggedIn
                             ? navigate("/profile")
@@ -61,7 +63,7 @@ export default function HomePage() {
                     }
                 >
                     {isLoggedIn ? <User size={16} /> : <LogIn size={16} />}
-                    {isLoggedIn ? "Profile" : "Login"}
+                    {isLoggedIn ? userStats?.displayName || "Profile" : "Login"}
                 </button>
             </div>
 
@@ -70,8 +72,6 @@ export default function HomePage() {
                 <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-text mb-8">
                     Arithmetic Battle
                 </h1>
-
-
 
                 {!isJoining ? (
                     <div className="flex gap-4">
@@ -99,19 +99,24 @@ export default function HomePage() {
                             onChange={(e) =>
                                 setRoomId(e.target.value.toUpperCase())
                             }
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleJoinRoom();
+                                }
+                            }}
                         />
                         <div className="flex gap-2">
                             <button
                                 className="flex-1 bg-mauve hover:opacity-90 text-base px-4 py-3 rounded-lg font-bold transition-opacity"
                                 onClick={handleJoinRoom}
                             >
-                                JOIN
+                                Join
                             </button>
                             <button
                                 className="flex-1 bg-surface0 hover:bg-surface1 text-text px-4 py-3 rounded-lg font-bold transition-colors border border-surface1"
                                 onClick={() => setIsJoining(false)}
                             >
-                                CANCEL
+                                Cancel
                             </button>
                         </div>
                     </div>

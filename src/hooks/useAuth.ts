@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth, signInWithGoogle, signOutUser, subscribeToUser, initUserDoc, subscribeToMatchHistory, type UserStats, type MatchRecord } from "../lib/firebase";
+import { auth, signInWithGoogle, signOutUser, subscribeToUser, initUserDoc, subscribeToMatchHistory, updateUserDisplayName, type UserStats, type MatchRecord } from "../lib/firebase";
 
 export function useAuth() {
     const [user, setUser] = useState<User | null>(null);
@@ -11,7 +11,7 @@ export function useAuth() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser && !currentUser.isAnonymous) {
-                await initUserDoc(currentUser.uid, currentUser.displayName || "Player");
+                await initUserDoc(currentUser.uid);
             }
             setUser(currentUser);
             setLoading(false);
@@ -52,5 +52,6 @@ export function useAuth() {
         matchHistory,
         signInWithGoogle,
         signOut: signOutUser,
+        updateUserDisplayName,
     };
 }

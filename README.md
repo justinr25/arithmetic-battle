@@ -6,9 +6,12 @@ Arithmetic Battle is a real-time, multiplayer mental math duel. Players compete 
 
 ## Key Features
 
-- **Instant Lobbies:** Create or join multiplayer rooms using unique 6-character codes and zero-friction Firebase Anonymous Authentication.
-- **Fair Problem Synchronization:** Powered by a custom seeded pseudo-random number generator (Mulberry32) to ensure both players receive identical problems in identical sequence without latency.
+- **Instant Lobbies:** Create or join multiplayer rooms using unique 6-character codes. Players can jump in quickly using Firebase Anonymous Authentication or link a Google account to save their stats.
+- **Player Profiles & Stats:** Google-authenticated users get a dedicated Profile page that tracks their Personal Best score, Total Games played, and a detailed Match History of their last 20 games (with outcomes, dates, and opponent names).
+- **Custom Usernames:** Players are assigned a random placeholder alias (e.g., `Player482`) upon sign-up, which they can edit at any time from their Profile page to maintain privacy.
+- **Fair Problem Synchronization:** Powered by a custom seeded pseudo-random number generator (Mulberry32) to ensure both players receive identical problems in an identical sequence with zero latency.
 - **Real-Time Score Syncing:** Live opponent scores and game room states are synchronized via Firebase Firestore persistent WebSocket listeners.
+- **Customizable Time Limits:** Hosts can easily select match durations of 15s, 30s, 60s, or 120s before starting a game.
 - **Interactive Rematches:** At the end of a match, players can initiate rematch requests to generate a fresh problem seed and reset scores for another round.
 - **Defensive Room & Input Protection:**
   - **Full-Room Prevention:** Implements read-before-write validation to protect active duels from being interrupted or hijacked by a third player.
@@ -29,6 +32,7 @@ To solve this, Arithmetic Battle implements a custom Mulberry32 seeded pseudo-ra
 
 ### 2. Custom React Hooks Architecture
 To decouple complex Firestore listener subscriptions and gameplay countdown timers from UI components, business logic is separated into specialized custom hooks:
+- `useAuth()`: Manages Firebase authentication state, handles Google Sign-In and anonymous fallbacks, and fetches real-time updates for user stats and match history.
 - `useRoom(roomId)`: Governs active Firestore snapshot listeners, manages connection lifecycles, parses player roles (Host vs. Guest), and provides structured error handling.
 - `useGameTimer(room)`: Manages the pre-game countdown sequence and ensures accurate gameplay timer synchronization across sessions.
 
@@ -36,8 +40,10 @@ To decouple complex Firestore listener subscriptions and gameplay countdown time
 
 ## Technical Stack
 
-- **Frontend:** React 19, TypeScript, Vite, React Router, Tailwind CSS v4, DaisyUI (Dracula theme), Lucide React, React Hot Toast
-- **Backend:** Firebase Firestore, Firebase Anonymous Authentication
+- **Frontend:** React 19, TypeScript, Vite, React Router
+- **Styling:** Tailwind CSS v4 with a custom gorgeous dark **Catppuccin** color palette and typography (Lexend), featuring smooth micro-animations.
+- **Icons & Alerts:** Lucide React, React Hot Toast
+- **Backend:** Firebase Firestore, Firebase Authentication (Google OAuth & Anonymous)
 - **Testing & Tooling:** Vitest, ESLint, TypeScript Compiler (tsc)
 - **Deployment:** Vercel
 
