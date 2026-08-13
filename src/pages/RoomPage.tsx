@@ -96,15 +96,21 @@ export default function RoomPage() {
                         <span>Time Limit</span>
                         <span className="text-text">{room.timeLimit}s</span>
                     </div>
-                    <input
-                        type="range"
-                        className="w-full h-2 bg-surface0 rounded-lg appearance-none cursor-pointer accent-mauve"
-                        min="15"
-                        max="180"
-                        step="15"
-                        value={room.timeLimit}
-                        onChange={(e) => updateTimeLimit(cleanRoomId, Number(e.target.value))}
-                    />
+                    <div className="flex justify-between gap-2">
+                        {[15, 30, 60, 120].map((time) => (
+                            <button
+                                key={time}
+                                onClick={() => updateTimeLimit(cleanRoomId, time)}
+                                className={`flex-1 py-2 rounded-lg font-bold transition-colors border ${
+                                    room.timeLimit === time
+                                        ? "bg-mauve text-base border-mauve"
+                                        : "bg-surface0 text-text hover:bg-surface1 border-surface1"
+                                }`}
+                            >
+                                {time}s
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
             {!amHost && (
